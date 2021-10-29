@@ -27,6 +27,7 @@ class SocialSignInButton extends CustomRaisedButtonWidget {
                 Text(
                   text,
                   textAlign: TextAlign.center,
+                  
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Opacity(opacity: 0.0, child: Image.asset(assetName)),

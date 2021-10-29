@@ -1,30 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_practice/Services/auth.dart';
-import 'package:flutter_practice/app/SignInPage/email_sigin_page.dart';
+import 'package:flutter_practice/app/SignInPage/EmailSignIn/email_sigin_page.dart';
+import 'package:flutter_practice/app/SignInPage/EmailSignIn/show_exception_dialog.dart';
 import 'package:flutter_practice/app/SignInPage/sign_in_button.dart';
 import 'package:flutter_practice/app/SignInPage/social_signin_button.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-class SignInPage extends StatelessWidget {
-  const SignInPage({
-    Key? key,
-    required this.auth,
-  }) : super(key: key);
+class SignInPage extends StatefulWidget {
+  const SignInPage({Key? key}) : super(key: key);
 
-  final AuthBase auth;
+  @override
+  State<SignInPage> createState() => _SignInPageState();
+}
 
-  Future<void> _signInAnonymously() async {
+class _SignInPageState extends State<SignInPage> {
+  bool? isLoading = false;
+
+  void _showException(BuildContext context, Exception exception) {
+    showExceptionDialog(
+      context,
+      title: "SignIN Failed",
+      exception: exception,
+    );
+  }
+
+  Future<void> _signInAnonymously(BuildContext context) async {
+    final auth = context.read(authServiceProvider);
     try {
-      await auth.signInAnonymously();
-    } catch (e) {
-      print(e.toString());
+      setState(() => isLoading = true);
+      await auth.signInAnonymously(context);
+    } on Exception catch (e) {
+      _showException(context, e);
+    } finally {
+      setState(() => isLoading = false);
     }
   }
 
-  Future<void> _signINwithGoogle() async {
+  Future<void> _signINwithGoogle(BuildContext context) async {
+    final auth = context.read(authServiceProvider);
     try {
+      setState(() => isLoading = true);
       await auth.signInwithGoogle();
-    } catch (e) {
-      print(e.toString());
+    } on Exception catch (e) {
+      _showException(context, e);
+    } finally {
+      setState(() => isLoading = false);
     }
   }
 
@@ -52,21 +72,14 @@ class SignInPage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            "SignIn ",
-            textAlign: TextAlign.center,
-            style: Theme.of(context)
-                .textTheme
-                .headline4!
-                .copyWith(fontWeight: FontWeight.bold, color: Colors.black),
-          ),
+          SizedBox(height: 50, child: _buildIndicator()),
           const SizedBox(
             height: 8,
           ),
           SocialSignInButton(
             text: "SignIn With google",
-            onPressed: _signINwithGoogle,
-            color: Colors.green,
+            onPressed: () => isLoading! ? null : _signINwithGoogle(context),
+            color: isLoading! ? Colors.grey : Colors.green,
             height: 50,
             assetName: "assets/images/2.0x/google-logo.png",
           ),
@@ -76,7 +89,7 @@ class SignInPage extends StatelessWidget {
           SocialSignInButton(
             text: "SigIN with Mobile",
             onPressed: () {},
-            color: Colors.orange.shade500,
+            color: isLoading! ? Colors.grey : Colors.orange.shade500,
             height: 50,
             assetName: "assets/images/mobile.png",
           ),
@@ -84,9 +97,9 @@ class SignInPage extends StatelessWidget {
             height: 10,
           ),
           SignInButton(
-            color: Colors.redAccent,
+            color: isLoading! ? Colors.grey : Colors.redAccent,
             text: "Sign with email",
-            onPressed: () => _signInWithEmail(context),
+            onPressed: () => isLoading! ? null : _signInWithEmail(context),
             height: 60,
           ),
           const SizedBox(
@@ -105,12 +118,26 @@ class SignInPage extends StatelessWidget {
           ),
           SignInButton(
             text: "Sign with anonymous",
-            color: Colors.lime[500],
-            onPressed: _signInAnonymously,
+            color: isLoading! ? Colors.grey : Colors.lime[500],
+            onPressed: () => isLoading! ? null : _signInAnonymously(context),
             height: 60,
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildIndicator() {
+    if (isLoading!) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return Text(
+      "SignIn ",
+      textAlign: TextAlign.center,
+      style: Theme.of(context)
+          .textTheme
+          .headline4!
+          .copyWith(fontWeight: FontWeight.bold, color: Colors.black),
     );
   }
 }

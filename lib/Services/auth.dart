@@ -1,43 +1,47 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter_practice/Services/general_firebase_service.dart';
+import 'package:flutter_practice/app/SignInPage/EmailSignIn/show_exception_dialog.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 abstract class AuthBase {
   User? get currentUser;
   Stream<User?> authStateChanges();
-  Future<User?> signInAnonymously();
-  Future<void> signOutAnonymously();
+  Future<User?> signInAnonymously(BuildContext context);
+
   Future<User?> signInwithGoogle();
-  Future<void> signOUtGoogle();
+  Future<void> signOUt();
+  Future<User?> signInWithEmailWithPassword(String email, String password);
+  Future<User?> createUserwithEmailAndPassword(String email, String password);
 }
 
+final authServiceProvider = Provider<Auth>((ref) {
+  return Auth(ref.read);
+});
+
 class Auth implements AuthBase {
-  final _firebaseAuth = FirebaseAuth.instance;
+  Auth(this._read);
+
+  final Reader _read;
+
   @override
-  User? get currentUser => _firebaseAuth.currentUser;
+  User? get currentUser => _read(firebaseAuthProvider).currentUser;
   @override
-  Stream<User?> authStateChanges() => _firebaseAuth.authStateChanges();
+  Stream<User?> authStateChanges() => _read(firebaseAuthProvider).authStateChanges();
   // signIn anonymously finction
 
   @override
-  Future<User?> signInAnonymously() async {
+  Future<User?> signInAnonymously(BuildContext context) async {
     try {
-      final UserCredential userCredentials = await _firebaseAuth.signInAnonymously();
+      final UserCredential userCredentials = await _read(firebaseAuthProvider).signInAnonymously();
       return userCredentials.user;
-    } catch (e) {
-      print(e.toString());
+    } on Exception catch (e) {
+      showExceptionDialog(context, title: "SignIN Failed", exception: e);
     }
   }
 
-  //SignOut functoini
 
-  @override
-  Future<void> signOutAnonymously() async {
-    try {
-      await _firebaseAuth.signOut();
-    } catch (e) {
-      print(e.toString());
-    }
-  }
 
   // Google signiN function
   @override
@@ -48,7 +52,7 @@ class Auth implements AuthBase {
       final googleAuth = await googleUser.authentication;
       if (googleAuth.idToken != null) {
         final UserCredential? userCredential =
-            await _firebaseAuth.signInWithCredential(GoogleAuthProvider.credential(
+            await _read(firebaseAuthProvider).signInWithCredential(GoogleAuthProvider.credential(
           idToken: googleAuth.idToken,
           accessToken: googleAuth.accessToken,
         ));
@@ -63,9 +67,24 @@ class Auth implements AuthBase {
   }
 
   @override
-  Future<void> signOUtGoogle() async {
+  Future<void> signOUt() async {
     final googleSignIn = GoogleSignIn();
     await googleSignIn.signOut();
-    await _firebaseAuth.signOut();
+    await _read(firebaseAuthProvider).signOut();
+  }
+
+  @override
+  Future<User?> signInWithEmailWithPassword(email, password) async {
+    final UserCredential? userCredential = await _read(firebaseAuthProvider)
+        .signInWithEmailAndPassword(email: email, password: password);
+
+    return userCredential!.user;
+  }
+
+  @override
+  Future<User?> createUserwithEmailAndPassword(String email, String password) async {
+    final UserCredential? userCredential = await _read(firebaseAuthProvider)
+        .createUserWithEmailAndPassword(email: email, password: password);
+    return userCredential!.user;
   }
 }
