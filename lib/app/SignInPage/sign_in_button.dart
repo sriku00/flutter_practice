@@ -17,3 +17,4 @@ class SignInButton extends CustomRaisedButtonWidget {
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ));
 }
+

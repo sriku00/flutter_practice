@@ -5,12 +5,13 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_practice/app/home_page.dart';
 import 'package:flutter_practice/Services/auth.dart';
 
-class LandingPage extends StatelessWidget {
+class LandingPage extends ConsumerWidget {
   const LandingPage({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final auth = context.read(authServiceProvider);
+  Widget build(BuildContext context , ScopedReader watch) {
+    final auth =  watch(authServiceProvider);
+
     return StreamBuilder<User?>(
         stream: auth.authStateChanges(),
         builder: (context, snapshot) {
@@ -18,8 +19,8 @@ class LandingPage extends StatelessWidget {
             final User? user = snapshot.data;
             if (user == null) {
               return const SignInPage();
-            }
-            return const HomePage();
+             }
+             return const HomePage();
           }
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),

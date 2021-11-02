@@ -10,7 +10,7 @@ class SocialSignInButton extends CustomRaisedButtonWidget {
     double? height,
   })  : assert(assetName != null),
 
-        super(
+        super( 
             height: height,
             borderRadius: 7,
             color: color,
