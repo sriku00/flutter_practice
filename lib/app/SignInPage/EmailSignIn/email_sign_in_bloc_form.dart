@@ -3,15 +3,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_practice/app/SignInPage/EmailSignIn/email_sign_in_bloc.dart';
-import 'package:flutter_practice/app/SignInPage/EmailSignIn/email_sign_in_model.dart';
+import 'package:flutter_practice/app/Models/email_sign_in_model.dart';
 import 'package:flutter_practice/app/SignInPage/EmailSignIn/form_submitbutton.dart';
 import 'package:flutter_practice/app/SignInPage/EmailSignIn/show_exception_dialog.dart';
-import 'package:flutter_practice/app/SignInPage/EmailSignIn/validaters.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-class EmailSignInBlocForm extends StatefulHookWidget
-    with EmailAndPasswordValidators {
-  EmailSignInBlocForm({Key? key}) : super(key: key);
+class EmailSignInBlocForm extends StatefulHookWidget {
+  const EmailSignInBlocForm({Key? key}) : super(key: key);
 
   @override
   State<EmailSignInBlocForm> createState() => _EmailSignInBlocFormState();
@@ -19,9 +17,19 @@ class EmailSignInBlocForm extends StatefulHookWidget
 
 class _EmailSignInBlocFormState extends State<EmailSignInBlocForm> {
   final TextEditingController _emailTextController = TextEditingController();
-  final TextEditingController _passwordTextController = TextEditingController();
   final FocusNode _focusNodeEmail = FocusNode();
   final FocusNode _focusNodePassword = FocusNode();
+  final TextEditingController _passwordTextController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailTextController.dispose();
+    _passwordTextController.dispose();
+    _focusNodeEmail.dispose();
+    _focusNodePassword.dispose();
+    super.dispose();
+  }
+
   // getter for the email and password
 
   Future<void> _onSubmit(BuildContext context) async {
@@ -29,7 +37,6 @@ class _EmailSignInBlocFormState extends State<EmailSignInBlocForm> {
 
     try {
       await auth.onSubmit();
-
       Navigator.of(context).pop();
     } on FirebaseAuthException catch (e) {
       showExceptionDialog(context, title: "SignIn Failded", exception: e);
@@ -37,40 +44,21 @@ class _EmailSignInBlocFormState extends State<EmailSignInBlocForm> {
   }
 
   void _onEditingEmailComplete(EmailSignInModel? model) {
-    final onFocus = widget.emailValidator.isValid(model!.email)
+    final onFocus = model!.emailValidator.isValid(model.email)
         ? _focusNodePassword
         : _focusNodeEmail;
     FocusScope.of(context).requestFocus(onFocus);
   }
 
 //
-  void _toggle(EmailSignInModel? model) {
+  void _toggle() {
     final bloc = context.read(emailSignInBlocProvider);
-    bloc.updateWith(
-      email: "",
-      password: "",
-      formType: model!.formType == EmailSignInType.signIn
-          ? EmailSignInType.register
-          : EmailSignInType.signIn,
-      isLoading: false,
-      isSubmitted: false,
-    );
-
+    bloc.toggle();
     _emailTextController.clear();
     _passwordTextController.clear();
   }
 
   List<Widget> _buildChildren(BuildContext context, EmailSignInModel? model) {
-    final primaryText = model!.formType == EmailSignInType.signIn
-        ? "Sign IN"
-        : "Create an Account";
-    final secondaryText = model.formType == EmailSignInType.signIn
-        ? "Need an account? Register"
-        : "Sign In";
-
-    bool submitEnabled = widget.emailValidator.isValid(model.email) &&
-        widget.passwordValidator.isValid(model.password) &&
-        !model.isLoading!;
     return [
       _buildEmailField(model),
       _buildPasswordField(model),
@@ -78,36 +66,35 @@ class _EmailSignInBlocFormState extends State<EmailSignInBlocForm> {
         height: 8,
       ),
       FormSubmitButton(
-        text: primaryText,
-        color: submitEnabled ? Colors.indigo : Colors.grey,
-        onpressed: submitEnabled ? () => _onSubmit(context) : null,
+        text: model!.primaryButtonText,
+        color: model.canSubmit! ? Colors.indigo : Colors.grey,
+        onpressed: model.canSubmit! ? () => _onSubmit(context) : null,
       ),
       TextButton(
         child: Text(
-          secondaryText,
+          model.secondaryButtonText!,
           style: Theme.of(context)
               .textTheme
               .subtitle2!
               .copyWith(fontSize: 15, fontWeight: FontWeight.normal),
         ),
-        onPressed: !model.isLoading! ? () => _toggle(model) : null,
+        onPressed: !model.isLoading! ? _toggle : null,
       )
     ];
   }
 
   TextField _buildPasswordField(EmailSignInModel? model) {
     final bloc = context.read(emailSignInBlocProvider);
-    bool showErrorText = model!.isSubmitted! &&
-        (!widget.passwordValidator.isValid(model.password));
+
     return TextField(
-      onChanged: (password) => bloc.updateWith(password: password),
+      onChanged: bloc.updatePassword,
       focusNode: _focusNodePassword,
       controller: _passwordTextController,
       textAlign: TextAlign.center,
       obscureText: true,
       decoration: InputDecoration(
         labelText: "password",
-        errorText: showErrorText ? widget.passwordValidatorText : null,
+        errorText: model!.passwordErrorText,
         enabled: model.isLoading == false,
       ),
       autocorrect: false,
@@ -118,10 +105,9 @@ class _EmailSignInBlocFormState extends State<EmailSignInBlocForm> {
 
   TextField _buildEmailField(EmailSignInModel? model) {
     final bloc = context.read(emailSignInBlocProvider);
-    bool showErrorText =
-        model!.isSubmitted! && !widget.emailValidator.isValid(model.email);
+    
     return TextField(
-      onChanged: (email) => bloc.updateWith(email: email),
+      onChanged: bloc.updateEmail,
       focusNode: _focusNodeEmail,
       textInputAction: TextInputAction.next,
       autocorrect: false,
@@ -131,7 +117,7 @@ class _EmailSignInBlocFormState extends State<EmailSignInBlocForm> {
       decoration: InputDecoration(
         labelText: "Email",
         hintText: "abcdd@gmai.com",
-        errorText: showErrorText ? widget.emailValidatorText : null,
+        errorText: model!.emailErrorText,
         enabled: model.isLoading == false,
       ),
       onEditingComplete: () => _onEditingEmailComplete(model),
@@ -143,7 +129,7 @@ class _EmailSignInBlocFormState extends State<EmailSignInBlocForm> {
     final bloc = useProvider(emailSignInBlocProvider);
 
     return StreamBuilder<EmailSignInModel?>(
-        initialData: const EmailSignInModel(),
+        initialData: EmailSignInModel(),
         stream: bloc.modelStream,
         builder: (context, snapshot) {
           final EmailSignInModel? _model = snapshot.data;
@@ -156,14 +142,5 @@ class _EmailSignInBlocFormState extends State<EmailSignInBlocForm> {
             ),
           );
         });
-  }
-
-  @override
-  void dispose() {
-    _emailTextController.dispose();
-    _passwordTextController.dispose();
-    _focusNodeEmail.dispose();
-    _focusNodePassword.dispose();
-    super.dispose();
   }
 }

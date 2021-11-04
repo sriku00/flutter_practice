@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_practice/app/SignInPage/EmailSignIn/email_sign_in_bloc_form.dart';
 
-
 class EmailSignInPage extends StatelessWidget {
   const EmailSignInPage({Key? key}) : super(key: key);
 
@@ -23,7 +22,7 @@ class EmailSignInPage extends StatelessWidget {
                   side: BorderSide(width: 1, color: Colors.grey.shade300),
                   borderRadius: BorderRadius.circular(17.0),
                 ),
-                child: EmailSignInBlocForm()),
+                child: const EmailSignInBlocForm()),
           ),
         ));
   }

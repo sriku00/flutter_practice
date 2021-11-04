@@ -3,12 +3,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_practice/Services/auth.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-final signInBlocProvider = Provider.autoDispose<SignInBloc>((ref) {
-  return SignInBloc(ref.read);
+final signInBlocProvider = Provider<SignInBloc>((ref) {
+  return SignInBloc(
+    ref.read,
+  );
 });
 
 class SignInBloc {
-  SignInBloc(this._reader);
+  SignInBloc(
+    this._reader,
+  );
 
   final Reader _reader;
 
@@ -16,6 +20,7 @@ class SignInBloc {
       StreamController<bool?>.broadcast();
 
   Stream<bool?> get isLoadingStream => _isLoadingController.stream;
+
   void dispose() {
     _isLoadingController.close();
   }
@@ -28,8 +33,8 @@ class SignInBloc {
       await _reader(authServiceProvider).signInAnonymously();
     } catch (e) {
       setIsLoading(false);
-      rethrow;  
-    } 
+      rethrow;
+    }
   }
 
   Future<User?> signInwithGoogle() async {

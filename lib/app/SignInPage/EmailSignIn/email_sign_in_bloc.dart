@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter_practice/Services/auth.dart';
-import 'package:flutter_practice/app/SignInPage/EmailSignIn/email_sign_in_model.dart';
+import 'package:flutter_practice/app/Models/email_sign_in_model.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 final emailSignInBlocProvider = Provider.autoDispose<EmailSignInBloc>((ref) {
@@ -11,7 +11,7 @@ class EmailSignInBloc {
   EmailSignInBloc(this._reader);
 
   final Reader _reader;
-  EmailSignInModel _emailSignInModel = const EmailSignInModel();
+  EmailSignInModel _emailSignInModel = EmailSignInModel();
   final StreamController<EmailSignInModel?> _emailStreamCotroller =
       StreamController<EmailSignInModel?>.broadcast();
 
@@ -36,6 +36,22 @@ class EmailSignInBloc {
       updateWith(isLoading: false);
       rethrow;
     }
+  }
+
+
+
+  void updatePassword(String? password) => updateWith(password: password);
+  void updateEmail(String? email) => updateWith(email: email);
+  void toggle() {
+    updateWith(
+      email: "",
+      password: "",
+      formType: _emailSignInModel.formType == EmailSignInType.signIn
+          ? EmailSignInType.register
+          : EmailSignInType.signIn,
+      isLoading: false,
+      isSubmitted: false,
+    );
   }
 
   void updateWith(

@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_practice/Services/auth.dart';
-import 'package:flutter_practice/app/SignInPage/EmailSignIn/email_sign_in_model.dart';
+import 'package:flutter_practice/app/Models/email_sign_in_model.dart';
 import 'package:flutter_practice/app/SignInPage/EmailSignIn/form_submitbutton.dart';
 import 'package:flutter_practice/app/SignInPage/EmailSignIn/show_exception_dialog.dart';
 import 'package:flutter_practice/app/SignInPage/EmailSignIn/validaters.dart';
